@@ -32,7 +32,6 @@ fbq('track', 'PageView');
   --hdr:rgba(22,22,23,.8);
 }
 *{box-sizing:border-box;margin:0;padding:0}
-html{scroll-behavior:smooth}
 body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text","Helvetica Neue",Inter,Arial,sans-serif;background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased;transition:background .3s,color .3s}
 button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 input{font:inherit;color:inherit}
@@ -285,6 +284,45 @@ footer{background:var(--bg2);padding:44px 0 30px;font-size:12px;color:var(--mute
 .optb button.na{text-decoration:line-through}
 .vmeta{font-size:13px;opacity:.75;line-height:1.5}.vmeta a{color:var(--accent)}
 @media(max-width:760px){.m-art .big img{height:260px}.pcard img.art{height:150px}}
+
+/* cart drawer */
+.cov{position:fixed;inset:0;background:rgba(0,0,0,.45);backdrop-filter:blur(6px);z-index:105;display:none}
+.cov.show{display:block}
+.cdrawer{position:fixed;top:0;right:0;height:100%;width:min(430px,100%);background:var(--card);z-index:110;box-shadow:var(--shadow-h);transform:translateX(105%);transition:transform .45s cubic-bezier(.2,.8,.2,1);display:flex;flex-direction:column}
+.cdrawer.show{transform:none}
+.ch{display:flex;align-items:center;justify-content:space-between;padding:20px 22px;border-bottom:1px solid var(--line)}
+.ch h3{font-size:20px;letter-spacing:-.02em}
+.cb{flex:1;overflow:auto;padding:6px 22px}
+.ci{display:flex;gap:14px;padding:14px 0;border-bottom:1px solid var(--line)}
+.ci .im{width:86px;height:86px;background:var(--bg2);border-radius:14px;display:grid;place-items:center;flex:none}
+.ci .im img{height:64px;width:auto;max-width:74px;object-fit:contain}
+.ci .im svg{height:70px;width:auto}
+.ci .inf{flex:1;min-width:0}
+.ci .inf>b{display:block;font-size:15px;letter-spacing:-.01em}
+.ci .inf .v{font-size:12.5px;color:var(--muted);margin:3px 0 8px;line-height:1.4}
+.ci .row{display:flex;align-items:center;justify-content:space-between}
+.ci .row b{font-size:15px}
+.ci .rm{color:var(--muted);font-size:13px}
+.ci .rm:hover{color:#ff3b30}
+.cart-empty{padding:70px 20px;text-align:center;color:var(--muted)}
+.cart-empty b{display:block;color:var(--text);font-size:19px;margin-bottom:8px}
+.cf{padding:16px 22px 20px;border-top:1px solid var(--line)}
+.cf .tot{display:flex;justify-content:space-between;font-size:17px;font-weight:600;margin-bottom:14px}
+.cf .tot small{display:block;font-size:12px;font-weight:400;color:var(--muted)}
+.ck{display:grid;gap:12px;padding:6px 22px 22px}
+.ck label{font-size:13px;color:var(--muted);display:block}
+.ck input{width:100%;border:1px solid var(--line);border-radius:12px;padding:11px 14px;background:var(--bg2);outline:none;margin-top:5px;font-size:15px}
+.ck input:focus{border-color:var(--accent)}
+.ck .err{color:#ff3b30;font-size:13px;min-height:18px}
+.ck .back{color:var(--accent);font-size:14px;margin-bottom:4px;display:inline-block}
+
+/* thanks page */
+.thanks{min-height:65vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:90px 24px}
+.thanks .ok{width:88px;height:88px;border-radius:50%;background:#34c759;display:grid;place-items:center;color:#fff;margin-bottom:26px}
+.thanks h1{font-size:46px;letter-spacing:-.03em;line-height:1.1}
+.thanks p{font-size:18px;color:var(--muted);margin-top:14px;max-width:540px;line-height:1.55}
+.thanks .btns{margin-top:34px;display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
+@media(max-width:560px){.thanks h1{font-size:34px}.ci .im{width:70px;height:70px}}
 </style>
 </head>
 <body>
@@ -312,6 +350,10 @@ src="https://www.facebook.com/tr?id=997750716105834&ev=PageView&noscript=1"
       <button class="ib" id="cmpBtn" title="Сравнение">
         <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M7 4v16M17 4v16M3 8h8M13 16h8"/></svg>
         <span class="cnt" id="cmpCnt"></span>
+      </button>
+      <button class="ib" id="cartBtn" title="Корзина">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 8h14l-1.2 12.2a2 2 0 0 1-2 1.8H8.2a2 2 0 0 1-2-1.8z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg>
+        <span class="cnt" id="cartCnt"></span>
       </button>
       <button class="ib" id="theme" title="Тема">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 14.5A8 8 0 0 1 9.5 4 8 8 0 1 0 20 14.5z"/></svg>
@@ -447,6 +489,18 @@ src="https://www.facebook.com/tr?id=997750716105834&ev=PageView&noscript=1"
   </section>
 </main>
 
+<main id="pageThanks" hidden>
+  <div class="wrap thanks">
+    <div class="ok"><svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4 4L19 7"/></svg></div>
+    <h1>Спасибо за заказ!</h1>
+    <p>Мы получили ваш заказ и скоро позвоним, чтобы подтвердить детали и согласовать доставку. Ожидайте звонка.</p>
+    <div class="btns">
+      <button class="btn pri" data-go-catalog>Перейти в каталог</button>
+      <button class="btn sec" id="toHome">На главную</button>
+    </div>
+  </div>
+</main>
+
 <footer id="contacts">
   <div class="wrap">
     <div class="fcols">
@@ -465,6 +519,13 @@ src="https://www.facebook.com/tr?id=997750716105834&ev=PageView&noscript=1"
   <button class="btn pri" style="height:40px;font-size:14px" id="doCmp">Сравнить</button>
   <button class="ib" id="clrCmp" title="Очистить"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
 </div>
+
+<div class="cov" id="cov"></div>
+<aside class="cdrawer" id="cartDrawer">
+  <div class="ch"><h3>Корзина</h3><button class="ib" onclick="closeCart()" title="Закрыть"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+  <div class="cb" id="cartBody"></div>
+  <div class="cf" id="cartFoot"></div>
+</aside>
 
 <div class="ov" id="ov"><div class="modal" id="modal"></div></div>
 
@@ -531,7 +592,9 @@ function art(t,colName){
 function catArt(id){return {iphone:art("phone","Космический оранжевый"),ipad:art("tablet","Серебристый"),mac:art("laptop","Небесный"),watch:art("watch","Космический чёрный"),airpods:art("airpods","Белый"),vision:art("vision","Серебристый"),acc:art("pencil","Белый")}[id]}
 
 /* ---------- state ---------- */
-const S={q:"",cat:new Set(),mem:new Set(),col:new Set(),price:12000,stock:false,isNew:false,sort:"pop",view:"grid",fav:new Set(),cmp:[],sel:{}};
+const S={q:"",cat:new Set(),mem:new Set(),col:new Set(),price:12000,stock:false,isNew:false,sort:"pop",view:"grid",fav:new Set(),cmp:[],sel:{},cart:JSON.parse(localStorage.getItem("profixe_cart")||"[]")};
+S.cart.forEach(c=>{const p=P.find(x=>x.id===c.id);if(p)c.vi=Math.min(c.vi??0,p.v.length-1)});
+const saveCart=()=>localStorage.setItem("profixe_cart",JSON.stringify(S.cart));
 P.forEach(p=>{let bi=0,bp=1e12;p.v.forEach((v,i)=>{if(v.p!=null&&v.p<bp){bp=v.p;bi=i}});S.sel[p.id]=bi});
 const cur=p=>p.v[S.sel[p.id]];
 const $=s=>document.querySelector(s);
@@ -610,7 +673,10 @@ function cardHTML(p){
         <div class="price"><small>${minPrice(p)==null?"":new Set(p.v.map(v=>v.p)).size>1?"от":"цена"}</small><b>${minPrice(p)==null?noPrice(p):rub(minPrice(p))}</b></div>
         <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
           <span class="stock ${p.stock?"":"no"}"><i></i>${p.stock?"В наличии":p.req?"Под заказ":"Нет в наличии"}</span>
-          <button class="cmp ${S.cmp.includes(p.id)?"on":""}" onclick="toggleCmp('${p.id}')">${S.cmp.includes(p.id)?"В сравнении":"Сравнить"}</button>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">
+            <button class="cmp ${S.cmp.includes(p.id)?"on":""}" onclick="toggleCmp('${p.id}')">${S.cmp.includes(p.id)?"В сравнении":"Сравнить"}</button>
+            <button class="cmp on" onclick="addToCart('${p.id}')">В корзину</button>
+          </div>
         </div>
       </div>
     </div></article>`;
@@ -625,7 +691,7 @@ function render(){
   document.querySelectorAll("[data-col]").forEach(b=>b.classList.toggle("on",S.col.has(b.dataset.col)));
   $("#priceV").textContent=rub(S.price);
   $("#fStock").classList.toggle("on",S.stock);$("#fNew").classList.toggle("on",S.isNew);
-  $("#favCnt").textContent=S.fav.size||"";$("#cmpCnt").textContent=S.cmp.length||"";
+  $("#favCnt").textContent=S.fav.size||"";$("#cmpCnt").textContent=S.cmp.length||"";$("#cartCnt").textContent=S.cart.length||"";
   renderCbar();
 }
 function renderCbar(){
@@ -634,6 +700,53 @@ function renderCbar(){
 }
 window.toggleFav=id=>{if(S.fav.has(id))S.fav.delete(id);else{S.fav.add(id);const p=P.find(x=>x.id===id);track("AddToWishlist",{content_ids:[id],content_name:p.n,value:minPrice(p)||0,currency:"BYN"})}render();if($("#ov").classList.contains("show")&&curModal===id)openModal(id)};
 window.toggleCmp=id=>{const i=S.cmp.indexOf(id);if(i>=0)S.cmp.splice(i,1);else{if(S.cmp.length>=3)S.cmp.shift();S.cmp.push(id)}render()};
+
+/* ---------- slow smooth scroll ---------- */
+function smoothScrollTo(y,dur){dur=dur||1200;const y0=window.scrollY,t0=performance.now();const step=t=>{const k=Math.min(1,(t-t0)/dur),e=1-Math.pow(1-k,3);window.scrollTo(0,y0+(y-y0)*e);if(k<1)requestAnimationFrame(step)};requestAnimationFrame(step)}
+const scrollToEl=(sel,dur)=>{const el=document.querySelector(sel);if(el)smoothScrollTo(el.getBoundingClientRect().top+window.scrollY,dur)};
+const scrollTop=(dur)=>smoothScrollTo(0,dur||900);
+
+/* ---------- cart ---------- */
+let ckMode=false;
+const cartItem=i=>{const p=P.find(x=>x.id===S.cart[i].id);const v=p.v[S.cart[i].vi]||p.v[0];return {p,v,price:v.p!=null?v.p:minPrice(p)}};
+const cartTotal=()=>S.cart.reduce((a,_,i)=>a+(cartItem(i).price||0),0);
+window.addToCart=id=>{const p=P.find(x=>x.id===id),vi=S.sel[id],v=p.v[vi];if(!S.cart.some(x=>x.id===id&&x.vi===vi))S.cart.push({id,vi});saveCart();render();openCart();track("AddToCart",{content_ids:[id],content_name:p.n+" — "+Object.values(v.o).join(" / "),value:v.p??minPrice(p)??0,currency:"BYN"})};
+function renderCart(){
+  $("#cartCnt").textContent=S.cart.length||"";
+  const body=$("#cartBody"),foot=$("#cartFoot");
+  if(ckMode){
+    body.innerHTML=`<div class="ck" style="padding-top:16px">
+      <a class="back" id="ckBack">← Назад к корзине</a>
+      <label>Ваше имя и фамилия<input id="ckName" placeholder="Иван Иванов" autocomplete="name"></label>
+      <label>Номер телефона<input id="ckPhone" placeholder="+375 XX XXX-XX-XX" autocomplete="tel" inputmode="tel"></label>
+      <div class="err" id="ckErr"></div>
+      <button class="btn pri" id="ckGo" style="justify-content:center">Подтвердить заказ</button>
+    </div>`;
+    foot.innerHTML="";
+    $("#ckBack").onclick=()=>{ckMode=false;renderCart()};
+    $("#ckGo").onclick=submitOrder;
+    return;
+  }
+  if(!S.cart.length){body.innerHTML=`<div class="cart-empty"><b>Корзина пуста</b>Добавьте товары из каталога.</div>`;foot.innerHTML="";return}
+  body.innerHTML=S.cart.map((_,i)=>{const {p,v,price}=cartItem(i);return `<div class="ci"><div class="im">${pimg(p,v)}</div><div class="inf"><b>${p.n}</b><div class="v">${Object.values(v.o).join(" · ")||catName(p.c)}</div><div class="row"><b>${price==null?noPrice(p):rub(price)}</b><button class="rm" onclick="delCart(${i})">Удалить</button></div></div></div>`}).join("");
+  foot.innerHTML=`<div class="tot"><span>Итого<small>Доставка — бесплатно</small></span><b>${rub(cartTotal())}</b></div><button class="btn pri" id="ckOpen" style="width:100%;justify-content:center">Оформить заказ</button>`;
+  $("#ckOpen").onclick=()=>{ckMode=true;renderCart()};
+}
+window.delCart=i=>{S.cart.splice(i,1);saveCart();renderCart();$("#cartCnt").textContent=S.cart.length||""};
+window.openCart=()=>{ckMode=false;renderCart();$("#cartDrawer").classList.add("show");$("#cov").classList.add("show");document.body.style.overflow="hidden"};
+window.closeCart=()=>{$("#cartDrawer").classList.remove("show");$("#cov").classList.remove("show");if(!$("#ov").classList.contains("show"))document.body.style.overflow="";ckMode=false};
+function submitOrder(){
+  const name=$("#ckName").value.trim(),phone=$("#ckPhone").value.trim(),err=$("#ckErr");
+  if(name.length<2){err.textContent="Укажите имя и фамилию";return}
+  if(phone.replace(/\D/g,"").length<9){err.textContent="Укажите корректный номер телефона";return}
+  const items=S.cart.map(cartItem).map(({p,v,price})=>({name:p.n,opts:Object.values(v.o).join(" / "),price:price??null}));
+  const order={id:Date.now(),date:new Date().toLocaleString("ru-RU"),name,phone,items,total:items.reduce((a,b)=>a+(b.price||0),0)};
+  const orders=JSON.parse(localStorage.getItem("profixe_orders")||"[]");
+  orders.unshift(order);localStorage.setItem("profixe_orders",JSON.stringify(orders));
+  track("Purchase",{value:order.total,currency:"BYN",content_ids:items.map(it=>P.find(p=>p.n===it.name)?.id).filter(Boolean),content_name:name});
+  S.cart=[];saveCart();ckMode=false;closeCart();
+  if(location.hash!=="#thanks")location.hash="#thanks";else route();
+}
 
 /* ---------- modal ---------- */
 let curModal=null;
@@ -659,7 +772,7 @@ window.openModal=id=>{
       <div class="m-price"><div><small>Цена</small><b>${has?rub(v.p):noPrice(p)}</b></div><span class="stock ${has?"":"no"}"><i></i>${has?"В наличии":p.req?"Под заказ":"Нет в наличии"}</span></div>
       ${has?"":`<div class="vmeta">Этой конфигурации сейчас нет. <a href="${CONTACT_URL}" target="_blank" rel="noopener" data-contact>Напишите нам</a> — привезём под заказ или подберём замену.</div>`}
       ${p.c==="iphone"?`<div class="gift">${ICON.gift}<div><b>Подарки к iPhone:</b> защитное стекло, чехол и блок питания. Бесплатная доставка.</div></div>`:`<div class="gift">${ICON.truck}<div><b>Бесплатная доставка</b> удобным для вас способом.</div></div>`}
-      <div class="btns"><button class="btn pri" onclick="toggleCmp('${id}');openModal('${id}')">${S.cmp.includes(id)?"Убрать из сравнения":"Добавить к сравнению"}</button><button class="btn sec" onclick="toggleFav('${id}')">${S.fav.has(id)?"В избранном":"В избранное"}</button></div>
+      <div class="btns"><button class="btn pri" onclick="toggleCmp('${id}');openModal('${id}')">${S.cmp.includes(id)?"Убрать из сравнения":"Добавить к сравнению"}</button><button class="btn sec" onclick="toggleFav('${id}')">${S.fav.has(id)?"В избранном":"В избранное"}</button><button class="btn sec" onclick="addToCart('${id}')">В корзину</button></div>
       <div class="opt"><h4>Характеристики</h4><dl class="specs">${Object.entries(p.spec).map(([k,x])=>`<div><dt>${k}</dt><dd>${x}</dd></div>`).join("")}</dl></div>
     </div>`;
   $("#ov").classList.add("show");document.body.style.overflow="hidden";
@@ -670,7 +783,7 @@ window.pick=(id,di,vi)=>{const p=P.find(x=>x.id===id),d=p.dims[di],val=dimVals(p
   S.sel[id]=bi;openModal(id);render()};
 window.closeModal=()=>{$("#ov").classList.remove("show");document.body.style.overflow="";curModal=null};
 $("#ov").addEventListener("click",e=>{if(e.target.id==="ov")closeModal()});
-document.addEventListener("keydown",e=>{if(e.key==="Escape")closeModal()});
+document.addEventListener("keydown",e=>{if(e.key==="Escape"){closeModal();closeCart()}});
 
 function openCompare(){
   if(!S.cmp.length)return;
@@ -706,20 +819,24 @@ $("#fNew").onclick=()=>{S.isNew=!S.isNew;render()};
 $("#reset").onclick=()=>{Object.assign(S,{q:"",cat:new Set(),mem:new Set(),col:new Set(),price:12000,stock:false,isNew:false});$("#q").value="";$("#fPrice").value=12000;render()};
 $("#doCmp").onclick=openCompare;$("#cmpBtn").onclick=openCompare;
 $("#clrCmp").onclick=()=>{S.cmp=[];render()};
-$("#favBtn").onclick=()=>{if(!S.fav.size)return;const ids=[...S.fav];S.cat=new Set();render();$("#grid").innerHTML=P.filter(p=>ids.includes(p.id)).map(cardHTML).join("");$("#found").textContent=ids.length;$("#catalog").scrollIntoView()};
+$("#favBtn").onclick=()=>{if(!S.fav.size)return;const ids=[...S.fav];S.cat=new Set();render();$("#grid").innerHTML=P.filter(p=>ids.includes(p.id)).map(cardHTML).join("");$("#found").textContent=ids.length;scrollToEl("#catalog")};
 $("#theme").onclick=()=>{const r=document.documentElement;r.dataset.theme=r.dataset.theme==="dark"?"":"dark"};
-/* ---------- routing: главная / о нас ---------- */
+$("#cartBtn").onclick=openCart;$("#cov").onclick=closeCart;
+$("#toHome").onclick=()=>{location.hash=""};
+/* ---------- routing: главная / о нас / спасибо ---------- */
 function route(){
-  const about=location.hash==="#about";
-  $("#pageHome").hidden=about;$("#pageAbout").hidden=!about;
-  $("#nav [data-about]").classList.toggle("on",about);
-  if(about||location.hash===""||location.hash==="#home")window.scrollTo(0,0);
-  else if(location.hash==="#catalog")$("#catalog").scrollIntoView();
-  else if(location.hash==="#contacts")$("#contacts").scrollIntoView();
+  const h=location.hash;
+  $("#pageHome").hidden=h==="#about"||h==="#thanks";
+  $("#pageAbout").hidden=h!=="#about";
+  $("#pageThanks").hidden=h!=="#thanks";
+  $("#nav [data-about]").classList.toggle("on",h==="#about");
+  if(h===""||h==="#home"||h==="#about"||h==="#thanks")scrollTop();
+  else if(h==="#catalog")scrollToEl("#catalog");
+  else if(h==="#contacts")scrollToEl("#contacts");
 }
-window.goCatalog=()=>{if(location.hash==="#about")history.replaceState(null,"","#catalog");route();$("#catalog").scrollIntoView()};
+window.goCatalog=()=>{if(location.hash==="#about"||location.hash==="#thanks")history.replaceState(null,"","#catalog");route();scrollToEl("#catalog")};
 window.addEventListener("hashchange",route);
-$(".logo").style.cursor="pointer";$(".logo").onclick=()=>{location.hash="";route();window.scrollTo(0,0)};
+$(".logo").style.cursor="pointer";$(".logo").onclick=()=>{location.hash="";route();scrollTop()};
 render();route();
 </script>
 </body>
