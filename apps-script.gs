@@ -51,6 +51,14 @@ function doPost(e){
 
 function doGet(e){
   const cb = (e.parameter.callback || "cb").replace(/[^a-zA-Z0-9_$]/g,"");
+  if(e.parameter.action==="logs"){
+    let logs=[];
+    try{
+      const sh=getSS().getSheetByName("tglog");
+      if(sh)logs=sh.getDataRange().getValues().slice(1);
+    }catch(err){}
+    return ContentService.createTextOutput(cb+"("+JSON.stringify(logs)+")").setMimeType(ContentService.MimeType.JAVASCRIPT);
+  }
   let orders = [];
   try{
     const sh = getSS().getSheetByName("orders");
@@ -97,24 +105,36 @@ function getSheet(){
 function rubShort(n){return Math.round(n||0).toLocaleString("ru-RU")+" BYN"}
 
 function notifyTG(o){
-  if(!TG_TOKEN || TG_TOKEN.indexOf("ВСТАВЬТЕ")===0) return;
-  const chat = resolveChatId();
-  if(!chat) return;
-  const lines = [
-    "🛒 Новый заказ #"+o.id, "",
-    "👤 "+o.name,
-    "📞 "+o.phone,
-    "🕒 "+o.date, ""
-  ];
-  (o.items||[]).forEach(it=>{
-    lines.push("• "+it.name+(it.opts?" ("+it.opts+")":"")+(it.price!=null?" — "+rubShort(it.price):""));
-  });
-  lines.push("", "💰 Итого: "+rubShort(o.total));
-  UrlFetchApp.fetch("https://api.telegram.org/bot"+TG_TOKEN+"/sendMessage", {
-    method:"post",
-    contentType:"application/json",
-    payload:JSON.stringify({chat_id:chat, text:lines.join("\n")})
-  });
+  try{
+    if(!TG_TOKEN || TG_TOKEN.indexOf("ВСТАВЬТЕ")===0){logTG("no token");return}
+    const chat = resolveChatId();
+    if(!chat){logTG("no chat_id for order #"+o.id);return}
+    const lines = [
+      "🛒 Новый заказ #"+o.id, "",
+      "👤 "+o.name,
+      "📞 "+o.phone,
+      "🕒 "+o.date, ""
+    ];
+    (o.items||[]).forEach(it=>{
+      lines.push("• "+it.name+(it.opts?" ("+it.opts+")":"")+(it.price!=null?" — "+rubShort(it.price):""));
+    });
+    lines.push("", "💰 Итого: "+rubShort(o.total));
+    const res = UrlFetchApp.fetch("https://api.telegram.org/bot"+TG_TOKEN+"/sendMessage", {
+      method:"post",
+      contentType:"application/json",
+      payload:JSON.stringify({chat_id:chat, text:lines.join("\n")})
+    });
+    logTG("order #"+o.id+" chat="+chat+" → "+res.getResponseCode()+" "+res.getContentText().slice(0,300));
+  }catch(err){logTG("ERR order #"+o.id+": "+err)}
+}
+
+function logTG(msg){
+  try{
+    const ss=getSS();
+    let sh=ss.getSheetByName("tglog");
+    if(!sh)sh=ss.insertSheet("tglog");
+    sh.appendRow([new Date().toISOString(),msg]);
+  }catch(e){}
 }
 
 /* chat_id: берём из TG_CHAT, а если там ID бота или пусто —
