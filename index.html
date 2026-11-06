@@ -885,7 +885,7 @@ function fetchOrders(cb){
 }
 function renderOrders(){
   const local=JSON.parse(localStorage.getItem("profixe_orders")||"[]");
-  const paint=list=>{$("#ordersList").innerHTML=list.length?list.map(o=>`<div class="ord">
+  const paint=list=>{$("#ordersList").innerHTML=list.length?[...list].sort((a,b)=>(b.id||0)-(a.id||0)).map(o=>`<div class="ord">
     <div class="oh"><div><b>${o.name}</b> <span class="ph">${o.phone}</span></div><div style="display:flex;align-items:center;gap:14px"><span class="dt">${fmtD(o.date)} · заказ #${o.id}</span><select class="st ${stClass(o.status)}" onchange="setOrderStatus(${o.id},this.value)">${STATUSES.map(s=>`<option ${s===o.status?"selected":""}>${s}</option>`).join("")}</select></div></div>
     <ul>${o.items.map(it=>`<li><span>${it.name}${it.opts?" — "+it.opts:""}</span><b>${it.price!=null?rub(it.price):"по запросу"}</b></li>`).join("")}</ul>
     <div class="ot">Итого: ${rub(o.total)}</div>
