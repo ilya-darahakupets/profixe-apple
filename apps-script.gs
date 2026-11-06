@@ -21,7 +21,7 @@
    ============================================================ */
 
 const TG_TOKEN = "9205110270:AAEICi-GhWD-nyUHoykuuV0o1JkHfR8rZWI"; // токен от @BotFather
-const TG_CHAT  = "9205110270";    // ваш chat id (узнать у @userinfobot)
+const TG_CHAT  = "1008169639";    // ваш chat id (узнать у @userinfobot)
 const SHEET_ID = "1eRdOZIUlvmp93XsmEHmIQM6ZGCCjHq9aS7b-kYGfVlA"; // ID Google-таблицы из URL (между /d/ и /edit)
 
 const HEAD = ["id","date","name","phone","items","total","status"];
