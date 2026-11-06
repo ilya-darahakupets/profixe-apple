@@ -323,6 +323,19 @@ footer{background:var(--bg2);padding:44px 0 30px;font-size:12px;color:var(--mute
 .thanks p{font-size:18px;color:var(--muted);margin-top:14px;max-width:540px;line-height:1.55}
 .thanks .btns{margin-top:34px;display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
 @media(max-width:560px){.thanks h1{font-size:34px}.ci .im{width:70px;height:70px}}
+
+/* orders page */
+.ord{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:22px 24px;margin-bottom:16px}
+.ord .oh{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;align-items:baseline;border-bottom:1px solid var(--line);padding-bottom:14px;margin-bottom:12px}
+.ord .oh b{font-size:18px;letter-spacing:-.01em}
+.ord .oh .ph{font-size:16px;color:var(--accent);font-weight:600}
+.ord .oh .dt{font-size:13px;color:var(--muted)}
+.ord ul{list-style:none;display:grid;gap:6px;font-size:14px}
+.ord li{display:flex;justify-content:space-between;gap:14px;color:var(--muted)}
+.ord li b{color:var(--text);font-weight:500}
+.ord .ot{display:flex;justify-content:flex-end;font-weight:600;font-size:16px;margin-top:12px;padding-top:12px;border-top:1px dashed var(--line)}
+.orders-empty{padding:60px 20px;text-align:center;color:var(--muted);background:var(--bg2);border-radius:var(--radius)}
+.orders-empty b{display:block;color:var(--text);font-size:19px;margin-bottom:8px}
 </style>
 </head>
 <body>
@@ -501,12 +514,19 @@ src="https://www.facebook.com/tr?id=997750716105834&ev=PageView&noscript=1"
   </div>
 </main>
 
+<main id="pageOrders" hidden>
+  <div class="wrap" style="padding:64px 24px">
+    <div class="sec-h"><div><h2>Заказы</h2><p>Заказы хранятся в этом браузере. Для доступа с другого устройства скачайте файл.</p></div><button class="btn sec" id="dlOrders">Скачать JSON</button></div>
+    <div id="ordersList"></div>
+  </div>
+</main>
+
 <footer id="contacts">
   <div class="wrap">
     <div class="fcols">
       <div><h5>Каталог</h5><a href="#catalog" data-go-catalog>iPhone</a><a href="#catalog" data-go-catalog>iPad</a><a href="#catalog" data-go-catalog>Mac</a><a href="#catalog" data-go-catalog>Watch</a></div>
       <div><h5>Ещё</h5><a href="#catalog" data-go-catalog>AirPods</a><a href="#catalog" data-go-catalog>Аксессуары</a><a href="#catalog" data-go-catalog>Сравнение</a></div>
-      <div><h5>Компания</h5><a href="#about">О нас</a><a href="#about">Почему нас выбирают</a><a href="#contacts">Контакты</a></div>
+      <div><h5>Компания</h5><a href="#about">О нас</a><a href="#about">Почему нас выбирают</a><a href="#orders">Заказы</a><a href="#contacts">Контакты</a></div>
       <div><h5>Связаться</h5><a href="#" data-contact target="_blank" rel="noopener">Telegram</a></div>
     </div>
     <p class="notice">Profixe.by не является официальным представителем Apple. Apple, iPhone, iPad, Mac, Apple Watch и AirPods — товарные знаки Apple Inc. Цены в макете условные.</p>
@@ -711,6 +731,7 @@ let wheelTarget=null,wheelRaf=null;
 const maxScroll=()=>document.documentElement.scrollHeight-window.innerHeight;
 window.addEventListener("wheel",e=>{
   if(e.ctrlKey)return;
+  if(e.target.closest(".ov.show,.cdrawer.show"))return;
   e.preventDefault();
   const d=e.deltaY*(e.deltaMode===1?16:e.deltaMode===2?window.innerHeight:1);
   wheelTarget=Math.max(0,Math.min(maxScroll(),(wheelTarget??window.scrollY)+d*1.6));
@@ -841,18 +862,37 @@ $("#favBtn").onclick=()=>{if(!S.fav.size)return;const ids=[...S.fav];S.cat=new S
 $("#theme").onclick=()=>{const r=document.documentElement;r.dataset.theme=r.dataset.theme==="dark"?"":"dark"};
 $("#cartBtn").onclick=openCart;$("#cov").onclick=closeCart;
 $("#toHome").onclick=()=>{location.hash=""};
-/* ---------- routing: главная / о нас / спасибо ---------- */
+/* ---------- orders page ---------- */
+function renderOrders(){
+  const orders=JSON.parse(localStorage.getItem("profixe_orders")||"[]");
+  $("#ordersList").innerHTML=orders.length?orders.map(o=>`<div class="ord">
+    <div class="oh"><div><b>${o.name}</b> <span class="ph">${o.phone}</span></div><span class="dt">${o.date} · заказ #${o.id}</span></div>
+    <ul>${o.items.map(it=>`<li><span>${it.name}${it.opts?" — "+it.opts:""}</span><b>${it.price!=null?rub(it.price):"по запросу"}</b></li>`).join("")}</ul>
+    <div class="ot">Итого: ${rub(o.total)}</div>
+  </div>`).join(""):`<div class="orders-empty"><b>Заказов пока нет</b>Оформленные заказы появятся здесь.</div>`;
+}
+$("#dlOrders").onclick=()=>{
+  const orders=JSON.parse(localStorage.getItem("profixe_orders")||"[]");
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(new Blob([JSON.stringify(orders,null,2)],{type:"application/json"}));
+  a.download="orders-"+new Date().toISOString().slice(0,10)+".json";
+  a.click();URL.revokeObjectURL(a.href);
+};
+
+/* ---------- routing: главная / о нас / спасибо / заказы ---------- */
 function route(){
   const h=location.hash;
-  $("#pageHome").hidden=h==="#about"||h==="#thanks";
+  $("#pageHome").hidden=h==="#about"||h==="#thanks"||h==="#orders";
   $("#pageAbout").hidden=h!=="#about";
   $("#pageThanks").hidden=h!=="#thanks";
+  $("#pageOrders").hidden=h!=="#orders";
   $("#nav [data-about]").classList.toggle("on",h==="#about");
-  if(h===""||h==="#home"||h==="#about"||h==="#thanks")scrollTop();
+  if(h==="#orders")renderOrders();
+  if(h===""||h==="#home"||h==="#about"||h==="#thanks"||h==="#orders")scrollTop();
   else if(h==="#catalog")scrollToEl("#catalog");
   else if(h==="#contacts")scrollToEl("#contacts");
 }
-window.goCatalog=()=>{if(location.hash==="#about"||location.hash==="#thanks")history.replaceState(null,"","#catalog");route();scrollToEl("#catalog")};
+window.goCatalog=()=>{if(location.hash==="#about"||location.hash==="#thanks"||location.hash==="#orders")history.replaceState(null,"","#catalog");route();scrollToEl("#catalog")};
 window.addEventListener("hashchange",route);
 $(".logo").style.cursor="pointer";$(".logo").onclick=()=>{location.hash="";route();scrollTop()};
 render();route();
