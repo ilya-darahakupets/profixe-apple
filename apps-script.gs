@@ -3,8 +3,10 @@
    Google Apps Script → веб-приложение (doPost/doGet)
 
    Что делает:
-   - doPost: сохраняет заказ в Google-таблицу (лист "orders")
+   - doPost (заказ): сохраняет заказ в Google-таблицу (лист "orders")
              и отправляет уведомление в Telegram-бота;
+   - doPost {action:"status"}: меняет статус заказа;
+   - doPost {action:"clear"}: очищает все заказы;
    - doGet ?action=orders&callback=cb: отдаёт заказы как JSONP
              (чтобы страница #orders могла их показать).
 
@@ -22,14 +24,29 @@ const TG_TOKEN = "9205110270:AAEICi-GhWD-nyUHoykuuV0o1JkHfR8rZWI"; // токен
 const TG_CHAT  = "9205110270";    // ваш chat id (узнать у @userinfobot)
 const SHEET_ID = "1eRdOZIUlvmp93XsmEHmIQM6ZGCCjHq9aS7b-kYGfVlA"; // ID Google-таблицы из URL (между /d/ и /edit)
 
+const HEAD = ["id","date","name","phone","items","total","status"];
+const STATUSES = ["Новый","В процессе","Выполнен","Отменен"];
+
+function ok(){return ContentService.createTextOutput("ok")}
+
 function doPost(e){
   try{
-    const o = JSON.parse(e.postData.contents);
+    const data = JSON.parse(e.postData.contents);
     const sh = getSheet();
-    sh.appendRow([o.id, o.date, o.name, o.phone, JSON.stringify(o.items||[]), o.total]);
+    if(data.action==="clear"){
+      sh.clearContents();
+      sh.appendRow(HEAD);
+      return ok();
+    }
+    if(data.action==="status"){
+      setStatus(sh, data.id, data.status);
+      return ok();
+    }
+    const o = data;
+    sh.appendRow([o.id, o.date, o.name, o.phone, JSON.stringify(o.items||[]), o.total, o.status||"Новый"]);
     notifyTG(o);
   }catch(err){ /* отвечаем ok в любом случае */ }
-  return ContentService.createTextOutput("ok");
+  return ok();
 }
 
 function doGet(e){
@@ -40,13 +57,23 @@ function doGet(e){
     if(sh){
       orders = sh.getDataRange().getValues().slice(1).map(r=>({
         id:r[0], date:r[1], name:r[2], phone:r[3],
-        items:JSON.parse(r[5]||"[]"), total:r[6]
-      }));
+        items:safeJSON(r[4]), total:r[5], status:r[6]||"Новый"
+      })).filter(o=>o.id!=null&&o.id!=="");
     }
   }catch(err){}
   return ContentService
     .createTextOutput(cb+"("+JSON.stringify(orders)+")")
     .setMimeType(ContentService.MimeType.JAVASCRIPT);
+}
+
+function safeJSON(s){try{return JSON.parse(s||"[]")}catch(err){return[]}}
+
+function setStatus(sh,id,status){
+  if(STATUSES.indexOf(status)===-1)return;
+  const vals=sh.getDataRange().getValues();
+  for(let i=1;i<vals.length;i++){
+    if(String(vals[i][0])===String(id)){sh.getRange(i+1,7).setValue(status);return}
+  }
 }
 
 function getSS(){
@@ -60,7 +87,9 @@ function getSheet(){
   let sh = ss.getSheetByName("orders");
   if(!sh){
     sh = ss.insertSheet("orders");
-    sh.appendRow(["id","date","name","phone","items","total"]);
+    sh.appendRow(HEAD);
+  }else if(sh.getRange(1,7).getValue()!=="status"){
+    sh.getRange(1,7).setValue("status");
   }
   return sh;
 }
