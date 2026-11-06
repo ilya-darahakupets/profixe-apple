@@ -673,9 +673,11 @@ const COLGROUP={"Чёрный":["Чёрный","Космический чёрн�
 const colMatch=(p,c)=>(COLGROUP[c]||[c]).some(x=>p.colors.includes(x));
 
 /* ---------- render ---------- */
+const QALIA={"айфон":"iphone","макбук":"mac","айпад":"ipad","часы":"watch","наушники":"airpods","airpods":"наушники"};
+function matchQ(p,q){if(p._hay.includes(q))return true;for(const k in QALIA)if(q.includes(k)&&p._hay.includes(QALIA[k]))return true;return false}
 function filtered(){
   let r=P.filter(p=>{
-    if(S.q&&!(p.n+" "+catName(p.c)+" "+p.v.map(v=>v.code||"").join(" ")).toLowerCase().includes(S.q))return false;
+    if(S.q){if(!p._hay)p._hay=(p.n+" "+catName(p.c)+" "+p.colors.join(" ")+" "+Object.values(p.spec).join(" ")+" "+p.v.map(v=>Object.values(v.o).join(" ")+" "+(v.code||"")).join(" ")).toLowerCase();if(!matchQ(p,S.q))return false}
     if(S.cat.size&&!S.cat.has(p.c))return false;
     if(S.mem.size&&!p.v.some(v=>S.mem.has(v.g)))return false;
     if(S.col.size&&![...S.col].some(c=>colMatch(p,c)))return false;
@@ -867,7 +869,7 @@ document.addEventListener("click",e=>{
   const v=e.target.closest("[data-v]");if(v){S.view=v.dataset.v;document.querySelectorAll("[data-v]").forEach(b=>b.classList.toggle("on",b===v));render()}
 });
 let searchT;
-$("#q").addEventListener("input",e=>{S.q=e.target.value.trim().toLowerCase();if(S.q&&location.hash==="#about")goCatalog();render();clearTimeout(searchT);if(S.q.length>1)searchT=setTimeout(()=>track("Search",{search_string:S.q}),1200)});
+$("#q").addEventListener("input",e=>{const had=!!S.q;S.q=e.target.value.trim().toLowerCase();if(S.q&&(location.hash==="#about"||location.hash==="#thanks"||location.hash==="#orders"))goCatalog();else if(S.q&&!had&&location.hash==="")scrollToEl("#catalog");render();clearTimeout(searchT);if(S.q.length>1)searchT=setTimeout(()=>track("Search",{search_string:S.q}),1200)});
 $("#fPrice").addEventListener("input",e=>{S.price=+e.target.value;render()});
 $("#fStock").onclick=()=>{S.stock=!S.stock;render()};
 $("#fNew").onclick=()=>{S.isNew=!S.isNew;render()};
