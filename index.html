@@ -702,9 +702,27 @@ window.toggleFav=id=>{if(S.fav.has(id))S.fav.delete(id);else{S.fav.add(id);const
 window.toggleCmp=id=>{const i=S.cmp.indexOf(id);if(i>=0)S.cmp.splice(i,1);else{if(S.cmp.length>=3)S.cmp.shift();S.cmp.push(id)}render()};
 
 /* ---------- slow smooth scroll ---------- */
-function smoothScrollTo(y,dur){dur=dur||1200;const y0=window.scrollY,t0=performance.now();const step=t=>{const k=Math.min(1,(t-t0)/dur),e=1-Math.pow(1-k,3);window.scrollTo(0,y0+(y-y0)*e);if(k<1)requestAnimationFrame(step)};requestAnimationFrame(step)}
+function smoothScrollTo(y,dur){dur=dur||1200;wheelTarget=null;const y0=window.scrollY,t0=performance.now();const step=t=>{const k=Math.min(1,(t-t0)/dur),e=1-Math.pow(1-k,3);window.scrollTo(0,y0+(y-y0)*e);if(k<1)requestAnimationFrame(step)};requestAnimationFrame(step)}
 const scrollToEl=(sel,dur)=>{const el=document.querySelector(sel);if(el)smoothScrollTo(el.getBoundingClientRect().top+window.scrollY,dur)};
 const scrollTop=(dur)=>smoothScrollTo(0,dur||900);
+
+/* smooth mouse-wheel scrolling */
+let wheelTarget=null,wheelRaf=null;
+const maxScroll=()=>document.documentElement.scrollHeight-window.innerHeight;
+window.addEventListener("wheel",e=>{
+  if(e.ctrlKey)return;
+  e.preventDefault();
+  const d=e.deltaY*(e.deltaMode===1?16:e.deltaMode===2?window.innerHeight:1);
+  wheelTarget=Math.max(0,Math.min(maxScroll(),(wheelTarget??window.scrollY)+d*1.6));
+  if(!wheelRaf)wheelLoop();
+},{passive:false});
+function wheelLoop(){
+  if(wheelTarget==null){wheelRaf=null;return}
+  const diff=wheelTarget-window.scrollY;
+  if(Math.abs(diff)<0.5){window.scrollTo(0,wheelTarget);wheelTarget=null;wheelRaf=null;return}
+  window.scrollTo(0,window.scrollY+diff*0.12);
+  wheelRaf=requestAnimationFrame(wheelLoop);
+}
 
 /* ---------- cart ---------- */
 let ckMode=false;
@@ -739,7 +757,7 @@ function submitOrder(){
   const name=$("#ckName").value.trim(),phone=$("#ckPhone").value.trim(),err=$("#ckErr");
   if(name.length<2){err.textContent="Укажите имя и фамилию";return}
   if(phone.replace(/\D/g,"").length<9){err.textContent="Укажите корректный номер телефона";return}
-  const items=S.cart.map(cartItem).map(({p,v,price})=>({name:p.n,opts:Object.values(v.o).join(" / "),price:price??null}));
+  const items=S.cart.map((_,i)=>cartItem(i)).map(({p,v,price})=>({name:p.n,opts:Object.values(v.o).join(" / "),price:price??null}));
   const order={id:Date.now(),date:new Date().toLocaleString("ru-RU"),name,phone,items,total:items.reduce((a,b)=>a+(b.price||0),0)};
   const orders=JSON.parse(localStorage.getItem("profixe_orders")||"[]");
   orders.unshift(order);localStorage.setItem("profixe_orders",JSON.stringify(orders));
