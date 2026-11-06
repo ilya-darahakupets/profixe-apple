@@ -556,7 +556,7 @@ src="https://www.facebook.com/tr?id=997750716105834&ev=PageView&noscript=1"
 /* Ссылка для кнопок «Написать нам» и Telegram в подвале — замените на свою */
 const CONTACT_URL="https://t.me/Prosanov";
 /* URL веб-приложения Google Apps Script (apps-script.gs). Пусто = заказы только в этом браузере */
-const API_URL="https://script.google.com/macros/s/AKfycbye-C59x_Vs7cFlXCoeXqYb6AzhcYhteG_puVVwtqsujsGbC9nqb9C353g1qwRsJ46z/exec";
+const API_URL="https://script.google.com/macros/s/AKfycbww1IByai4Dqbn2ZJvbfmeOXOyYjh6raeiOoWSvapNy86CEKZQLQqD0dUDg32ya-yg/exec";
 
 /* Meta Pixel: безопасный вызов стандартных событий */
 function track(ev,params){if(typeof window.fbq==="function")window.fbq("track",ev,params||{})}
@@ -787,7 +787,12 @@ function submitOrder(){
   const order={id:Date.now(),date:new Date().toLocaleString("ru-RU"),name,phone,items,status:"Новый",total:items.reduce((a,b)=>a+(b.price||0),0)};
   const orders=JSON.parse(localStorage.getItem("profixe_orders")||"[]");
   orders.unshift(order);localStorage.setItem("profixe_orders",JSON.stringify(orders));
-  if(API_URL)fetch(API_URL,{method:"POST",body:JSON.stringify(order)}).catch(()=>{});
+  order.synced=false;
+  if(API_URL)fetch(API_URL,{method:"POST",body:JSON.stringify(order)}).then(()=>{
+    order.synced=true;
+    const a=JSON.parse(localStorage.getItem("profixe_orders")||"[]");
+    const t=a.find(x=>x.id===order.id);if(t){t.synced=true;localStorage.setItem("profixe_orders",JSON.stringify(a))}
+  }).catch(()=>{});
   track("Purchase",{value:order.total,currency:"BYN",content_ids:items.map(it=>P.find(p=>p.n===it.name)?.id).filter(Boolean),content_name:name});
   S.cart=[];saveCart();ckMode=false;closeCart();
   if(location.hash!=="#thanks")location.hash="#thanks";else route();
@@ -886,7 +891,7 @@ function renderOrders(){
     <div class="ot">Итого: ${rub(o.total)}</div>
   </div>`).join(""):`<div class="orders-empty"><b>Заказов пока нет</b>Оформленные заказы появятся здесь.</div>`};
   fetchOrders(remote=>{
-    if(remote){const ids=new Set(remote.map(o=>o.id));paint([...remote,...local.filter(o=>!ids.has(o.id))])}
+    if(remote){const ids=new Set(remote.map(o=>o.id));paint([...remote,...local.filter(o=>o.synced===false&&!ids.has(o.id))])}
     else paint(local);
   });
 }
