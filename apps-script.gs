@@ -98,6 +98,8 @@ function rubShort(n){return Math.round(n||0).toLocaleString("ru-RU")+" BYN"}
 
 function notifyTG(o){
   if(!TG_TOKEN || TG_TOKEN.indexOf("ВСТАВЬТЕ")===0) return;
+  const chat = resolveChatId();
+  if(!chat) return;
   const lines = [
     "🛒 Новый заказ #"+o.id, "",
     "👤 "+o.name,
@@ -111,6 +113,27 @@ function notifyTG(o){
   UrlFetchApp.fetch("https://api.telegram.org/bot"+TG_TOKEN+"/sendMessage", {
     method:"post",
     contentType:"application/json",
-    payload:JSON.stringify({chat_id:TG_CHAT, text:lines.join("\n")})
+    payload:JSON.stringify({chat_id:chat, text:lines.join("\n")})
   });
+}
+
+/* chat_id: берём из TG_CHAT, а если там ID бота или пусто —
+   находим первый чат, писавший боту, и запоминаем в свойствах скрипта */
+function resolveChatId(){
+  const botId = TG_TOKEN.split(":")[0];
+  if(TG_CHAT && String(TG_CHAT)!==botId) return TG_CHAT;
+  const props = PropertiesService.getScriptProperties();
+  const saved = props.getProperty("TG_CHAT_ID");
+  if(saved) return saved;
+  try{
+    const res = UrlFetchApp.fetch("https://api.telegram.org/bot"+TG_TOKEN+"/getUpdates",{muteHttpExceptions:true});
+    const data = JSON.parse(res.getContentText());
+    const upd = (data.result||[]).find(u=>u.message&&u.message.chat);
+    if(upd){
+      const id = String(upd.message.chat.id);
+      props.setProperty("TG_CHAT_ID", id);
+      return id;
+    }
+  }catch(err){}
+  return null;
 }
