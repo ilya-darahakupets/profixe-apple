@@ -18,9 +18,9 @@
    5. Скопируйте URL (.../exec) и вставьте в index.html → API_URL.
    ============================================================ */
 
-const TG_TOKEN = "ВСТАВЬТЕ_ТОКЕН_БОТА"; // токен от @BotFather
-const TG_CHAT  = "ВСТАВЬТЕ_CHAT_ID";    // ваш chat id (узнать у @userinfobot)
-const SHEET_ID = "ВСТАВЬТЕ_ID_ТАБЛИЦЫ"; // ID Google-таблицы из URL (между /d/ и /edit)
+const TG_TOKEN = "9205110270:AAEICi-GhWD-nyUHoykuuV0o1JkHfR8rZWI"; // токен от @BotFather
+const TG_CHAT  = "9205110270";    // ваш chat id (узнать у @userinfobot)
+const SHEET_ID = "1eRdOZIUlvmp93XsmEHmIQM6ZGCCjHq9aS7b-kYGfVlA"; // ID Google-таблицы из URL (между /d/ и /edit)
 
 function doPost(e){
   try{
